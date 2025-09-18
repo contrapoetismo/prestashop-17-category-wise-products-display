@@ -29,14 +29,6 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use PrestaShop\PrestaShop\Core\Module\WidgetInterface;
-use PrestaShop\PrestaShop\Adapter\Category\CategoryProductSearchProvider;
-use PrestaShop\PrestaShop\Adapter\Image\ImageRetriever;
-use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
-use PrestaShop\PrestaShop\Core\Product\ProductListingPresenter;
-use PrestaShop\PrestaShop\Adapter\Product\ProductColorsRetriever;
-use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchContext;
-use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchQuery;
-use PrestaShop\PrestaShop\Core\Product\Search\SortOrder;
 
 class Kk_CategoryWiseProducts extends Module implements WidgetInterface
 {
@@ -269,93 +261,17 @@ class Kk_CategoryWiseProducts extends Module implements WidgetInterface
 
     public function getWidgetVariables($hookName = null, array $configuration = [])
     {
-        $products = $this->getList();
-
-        if (!empty($products)) {
-            return array(
-                'products' => $products,
-            );
-        }
-        return false;
-    }
-
-    protected function getList(){
-
-        $categoryIds = [2];
-        $products = [];
-
-        if(!empty(Configuration::get('HOME_FEATURED_CAT'))){
-
-            $categoryIds = explode(';', Configuration::get('HOME_FEATURED_CAT'));
-        }
-
-        foreach ($categoryIds as $categoryId) {
-
-            $category = new Category((int) $categoryId);
-           
-            $products[$categoryId]['category'] = $category;
-            $products[$categoryId]['categoryLink'] = Context::getContext()->link->getCategoryLink($categoryId);
-            $products[$categoryId]['product'] = $this->getProducts($category);
-            $products[$categoryId]['id_language'] = $this->context->language->id;
-        }
-
-
-        return $products;
-    }
-
-    protected function getProducts($category)
-    {
-
-        $searchProvider = new CategoryProductSearchProvider(
-            $this->context->getTranslator(),
-            $category
-        );
-
-        $context = new ProductSearchContext($this->context);
-
-        $query = new ProductSearchQuery();
-
-        $nProducts = Configuration::get('HOME_FEATURED_NBR');
-        if ($nProducts < 0) {
-            $nProducts = 12;
-        }
-
-        $query->setResultsPerPage($nProducts)->setPage(1);
-
-        if (Configuration::get('HOME_FEATURED_RANDOMIZE')) {
-            $query->setSortOrder(SortOrder::random());
-        } else {
-            $query->setSortOrder(new SortOrder('product', 'position', 'asc'));
-        }
-
-        $result = $searchProvider->runQuery(
-            $context,
-            $query
-        );
-
-        $assembler = new ProductAssembler($this->context);
-        $presenterFactory = new ProductPresenterFactory($this->context);
-        $presentationSettings = $presenterFactory->getPresentationSettings();
-        $presenter = new ProductListingPresenter(
-            new ImageRetriever(
-                $this->context->link
-            ),
-            $this->context->link,
-            new PriceFormatter(),
-            new ProductColorsRetriever(),
-            $this->context->getTranslator()
-        );
-
-        $products_for_template = [];
-
-        foreach ($result->getProducts() as $rawProduct) {
-            $products_for_template[] = $presenter->present(
-                $presentationSettings,
-                $assembler->assembleProduct($rawProduct),
-                $this->context->language
-            );
-        }
-
-        return $products_for_template;
+        return [
+            'gameTitle' => $this->trans('Salto perruno: evita los coches', [], 'Modules.CategoryWiseProducts.Shop'),
+            'startLabel' => $this->trans('Iniciar partida', [], 'Modules.CategoryWiseProducts.Shop'),
+            'restartLabel' => $this->trans('Reiniciar', [], 'Modules.CategoryWiseProducts.Shop'),
+            'messages' => [
+                'ready' => $this->trans('Pulsa el botón iniciar para comenzar.', [], 'Modules.CategoryWiseProducts.Shop'),
+                'jumpHint' => $this->trans('Salta con la barra espaciadora, W, la flecha hacia arriba o tocando la pista.', [], 'Modules.CategoryWiseProducts.Shop'),
+                'gameOver' => $this->trans('¡Ups! Un coche ha golpeado al perro.', [], 'Modules.CategoryWiseProducts.Shop'),
+                'newBest' => $this->trans('¡Nuevo récord personal!', [], 'Modules.CategoryWiseProducts.Shop'),
+                'resume' => $this->trans('Pulsa reiniciar o salta para volver a jugar.', [], 'Modules.CategoryWiseProducts.Shop'),
+            ],
+        ];
     }
 }
